@@ -7,9 +7,17 @@ o=/data/options.json
 tok=$(jq -r .github_token "$o")
 ziel=$(jq -r .config "$o")
 url="https://api.github.com/repos/$(echo "$ziel" | cut -d/ -f1-2)/contents/$(echo "$ziel" | cut -d/ -f3-)"
-jq -r '.env[]' "$o" > /tmp/env
-while IFS= read -r zeile; do [ -n "$zeile" ] && export "$zeile"; done < /tmp/env
+# Zeilen NAME=wert (auch „NAME = wert“ oder „NAME: wert“); im Protokoll nur die Namen, nie die Werte
+jq -r '.env // [] | .[]' "$o" | tr -d '\r' > /tmp/env
+namen=
+while IFS= read -r zeile; do
+  name=$(printf %s "$zeile" | sed -E 's/^[[:space:]]*([A-Za-z_][A-Za-z0-9_]*)[[:space:]]*[=:].*/\1/')
+  wert=$(printf %s "$zeile" | sed -E 's/^[^=:]*[=:][[:space:]]*//; s/[[:space:]]+$//')
+  [ -n "$zeile" ] && [ "$name" != "$zeile" ] || { [ -z "$zeile" ] || echo "env: Zeile ohne NAME=wert ignoriert" >&2; continue; }
+  export "$name=$wert"; namen="$namen $name"
+done < /tmp/env
 rm -f /tmp/env
+echo "env gesetzt:${namen:- (keine)}" >&2
 
 holen() {
   curl -sfL -m 30 -H "Authorization: Bearer $tok" -H 'Accept: application/vnd.github.raw' "$url" -o /data/gatus.neu &&
