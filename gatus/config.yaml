@@ -1,7 +1,7 @@
 name: Gatus
-version: "5.38.0-2"
+version: "5.38.0-3"
 slug: gatus
-description: Statusseite aller ysf-Dienste (Gatus), Konfiguration aus ysf/ops
+description: Statusseite aller ysf-Dienste (Gatus), Konfiguration aus ysf/ops, Werte aus OpenBao
 url: https://github.com/ysf/ha-apps
 arch: [aarch64, amd64]
 init: false
@@ -12,8 +12,18 @@ host_network: true
 options:
   github_token: ""
   config: ysf/ops/status/gatus.yaml
+  bao_addr: https://openbao.int.ysf.sh
+  dns: 100.70.252.44
+  role_id: ""
+  secret_id: ""
+  bao_paths: [infra/status, classroomfactory/status]
   env: []
 schema:
   github_token: password
   config: str
+  bao_addr: str
+  dns: str
+  role_id: str
+  secret_id: password
+  bao_paths: [str]
   env: [str]
