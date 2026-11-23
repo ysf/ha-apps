@@ -1,0 +1,19 @@
+name: Gatus
+version: "5.38.0-1"
+slug: gatus
+description: Statusseite aller ysf-Dienste (Gatus), Konfiguration aus ysf/ops
+url: https://github.com/ysf/ha-apps
+arch: [aarch64, amd64]
+init: false
+startup: application
+boot: auto
+# Host-Netz: Gatus erreicht das Tailnet über die Tailscale-App und lauscht auf Port 80 aller Adressen des Geräts
+host_network: true
+options:
+  github_token: ""
+  config: ysf/ops/status/gatus.yaml
+  env: []
+schema:
+  github_token: password
+  config: str
+  env: [str]
