@@ -1,6 +1,6 @@
 #!/bin/sh
 # Holt die Gatus-Konfiguration aus GitHub (Option config: owner/repo/pfad, Token nur mit Lesezugriff) und die Werte für
-# ${NAME} darin aus OpenBao (AppRole mit Leserecht nur auf bao_paths, alle Felder als Großbuchstaben), setzt sie ein
+# ${NAME} darin aus OpenBao (AppRole mit Leserecht nur auf bao_paths, alle Felder als Großbuchstaben, - wird _), setzt sie ein
 # und schreibt /data/gatus.yaml. Alle 10 Minuten neu; Gatus lädt Änderungen selbst (skip-invalid-config-update).
 # Option env: zusätzliche Zeilen NAME=wert (gehen vor). Im Protokoll nur Namen, nie Werte
 set -eu
@@ -27,7 +27,7 @@ werte() {
       curl -sf -m 15 $bao_resolve -X POST --data @- "$bao/v1/auth/approle/login" | jq -r .auth.client_token) || return 1
     for p in $(jq -r '.bao_paths[]' "$o"); do
       curl -sf -m 15 $bao_resolve -H "X-Vault-Token: $t" "$bao/v1/secrets/data/$p" |
-        jq -r '.data.data | to_entries[] | "\(.key | ascii_upcase)=\(.value)"' >> /tmp/werte || return 1
+        jq -r '.data.data | to_entries[] | "\(.key | ascii_upcase | gsub("-"; "_"))=\(.value)"' >> /tmp/werte || return 1
     done
   fi
   jq -r '.env // [] | .[]' "$o" | sed -E 's/^[[:space:]]*([A-Za-z_][A-Za-z0-9_]*)[[:space:]]*[=:][[:space:]]*/\1=/' |

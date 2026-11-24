@@ -1,5 +1,5 @@
 name: Gatus
-version: "5.38.0-3"
+version: "5.38.0-4"
 slug: gatus
 description: Statusseite aller ysf-Dienste (Gatus), Konfiguration aus ysf/ops, Werte aus OpenBao
 url: https://github.com/ysf/ha-apps
