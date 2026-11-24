@@ -25,9 +25,14 @@ werte() {
   if [ -n "$bao" ] && [ -n "$(opt .role_id)" ]; then
     t=$(jq -n --arg r "$(opt .role_id)" --arg s "$(opt .secret_id)" '{role_id:$r, secret_id:$s}' |
       curl -sf -m 15 $bao_resolve -X POST --data @- "$bao/v1/auth/approle/login" | jq -r .auth.client_token) || return 1
-    for p in $(jq -r '.bao_paths[]' "$o"); do
-      curl -sf -m 15 $bao_resolve -H "X-Vault-Token: $t" "$bao/v1/secrets/data/$p" |
-        jq -r '.data.data | to_entries[] | "\(.key | ascii_upcase | gsub("-"; "_"))=\(.value)"' >> /tmp/werte || return 1
+    # Pfade: Option bao_paths, ergänzt um das Feld pfade im ersten Pfad (pflegt ops, status.yml), jeder einmal
+    lesen() { curl -sf -m 15 $bao_resolve -H "X-Vault-Token: $t" "$bao/v1/secrets/data/$1"; }
+    pfade=$(jq -r '.bao_paths[]' "$o")
+    erster=$(echo "$pfade" | head -1)
+    pfade=$(printf '%s\n%s\n' "$pfade" "$(lesen "$erster" | jq -r '.data.data.pfade // "" | split(",")[]')" | grep . | awk '!s[$0]++')
+    for p in $pfade; do
+      lesen "$p" | jq -r '.data.data | del(.pfade) | to_entries[] | "\(.key | ascii_upcase | gsub("-"; "_"))=\(.value)"' >> /tmp/werte ||
+        { echo "OpenBao-Pfad $p nicht lesbar" >&2; return 1; }
     done
   fi
   jq -r '.env // [] | .[]' "$o" | sed -E 's/^[[:space:]]*([A-Za-z_][A-Za-z0-9_]*)[[:space:]]*[=:][[:space:]]*/\1=/' |
